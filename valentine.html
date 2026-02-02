@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For My Valentine 💌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* --- RESET & BODY --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #fccb90 0%, #d57eeb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        body.pulsating { animation: backgroundPulse 2s infinite alternate; }
+
+        @keyframes backgroundPulse {
+            0% { background: linear-gradient(120deg, #ff9a9e 0%, #fecfef 100%); }
+            100% { background: linear-gradient(120deg, #ff758c 0%, #ff7eb3 100%); }
+        }
+
+        /* --- ENVELOPE CONTAINER --- */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+            transform: scale(1);
+        }
+
+        .envelope-wrapper:hover { transform: scale(1.02); }
+
+        .envelope {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            background: #ff4757;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-top: 120px solid #ff6b81;
+            transform-origin: top;
+            transition: transform 0.6s ease 0.5s, z-index 0.2s 0.5s;
+            z-index: 3;
+        }
+
+        .pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-bottom: 120px solid #ff4757;
+            z-index: 2;
+            border-radius: 0 0 10px 10px;
+        }
+
+        /* --- THE LETTER (Now clickable) --- */
+        .letter {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 95%;
+            background: #fff;
+            border-radius: 5px;
+            transition: transform 0.6s ease 1s, bottom 0.5s ease;
+            z-index: 1;
+            padding: 20px;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.1);
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #e8cbcb 31px, #e8cbcb 32px);
+            background-attachment: local;
+            line-height: 32px;
+            cursor: pointer; /* Shows hand icon */
+        }
+
+        /* Animation for the "Click Me" hint on the letter */
+        .click-hint {
+            font-size: 0.8rem;
+            color: #ff4757;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: bounceText 1s infinite;
+            display: none; /* Hidden until flap opens */
+        }
+        @keyframes bounceText {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .letter-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.8rem;
+            color: #555;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 55px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            color: #e84118;
+            z-index: 4;
+            cursor: pointer;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: pulse 1.5s infinite;
+            transition: opacity 0.5s ease 0.5s;
+        }
+
+        /* --- ANIMATION STATES --- */
+        .envelope-wrapper.flap-open .flap { transform: rotateX(180deg); z-index: 1; }
+        .envelope-wrapper.flap-open .letter { transform: translateX(-50%) translateY(-60px); z-index: 3; } /* Slides up halfway */
+        .envelope-wrapper.flap-open .heart-seal { opacity: 0; animation: none; }
+        .envelope-wrapper.flap-open .click-hint { display: block; }
+        
+        .hidden { display: none !important; }
+
+        /* --- MAIN INTERFACE --- */
+        .main-card-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; 
+        }
+        .main-card-container.visible { display: flex; opacity: 1; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px;
+            max-height: 90vh;
+            overflow-y: auto; /* Allow scrolling if lyrics are long */
+        }
+
+        /* --- LYRICS SECTION --- */
+        .lyrics-container {
+            margin-bottom: 20px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.4rem;
+            line-height: 1.4;
+        }
+        
+        .lyric-line {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.8s forwards;
+            margin-bottom: 5px;
+        }
+        
+        /* Colorful Lyrics Logic */
+        .lyric-line:nth-child(1) { color: #e84118; animation-delay: 0.2s; }
+        .lyric-line:nth-child(2) { color: #8c7ae6; animation-delay: 1.0s; }
+        .lyric-line:nth-child(3) { color: #c23616; animation-delay: 1.8s; }
+        .lyric-line:nth-child(4) { color: #0097e6; animation-delay: 2.6s; }
+        .lyric-line:nth-child(5) { color: #e1b12c; animation-delay: 3.4s; }
+        .lyric-line:nth-child(6) { color: #44bd32; animation-delay: 4.2s; }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .gif-container {
+            width: 100%;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .gif-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        h1 { font-family: 'Dancing Script', cursive; color: #d6336c; font-size: 2rem; margin-bottom: 10px; }
+        p { color: #555; font-size: 1rem; margin-bottom: 20px; }
+        
+        .btn-group { display: flex; gap: 10px; flex-direction: column; }
+        .btn { border: none; padding: 12px 24px; font-size: 1.1rem; font-weight: 700; border-radius: 50px; cursor: pointer; width: 100%; transition: transform 0.2s; }
+        .btn-primary { background: #ff4757; color: white; }
+        .btn-secondary { background: #ffffff; color: #ff4757; border: 2px solid #ff4757; }
+
+        .screen { display: none; }
+        .active { display: block; animation: fadeIn 0.6s ease; }
+
+        @media (max-width: 400px) {
+            .envelope-wrapper { transform: scale(0.85); }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="song.mp3" type="audio/mp3">
+    </audio>
+
+    <div class="envelope-wrapper" id="envelope" onclick="openFlap()">
+        <div class="envelope">
+            <div class="letter" onclick="showFullCard(event)">
+                <div class="letter-text">
+                    <p>My Dearest,</p>
+                    <p>I have a question...</p>
+                    <div class="click-hint">⬇️ (Tap this paper) ⬇️</div>
+                </div>
+            </div>
+            <div class="pocket"></div>
+            <div class="flap"></div>
+            <div class="heart-seal">❤️</div>
+        </div>
+    </div>
+
+    <div class="main-card-container" id="main-card">
+        <div class="card">
+            
+            <div id="screen-ask" class="screen active">
+                
+                <div class="lyrics-container">
+                    <div class="lyric-line">"I HAVE LOVED YOU"</div>
+                    <div class="lyric-line">"SINCE THE DAY I MET YOU"</div>
+                    <div class="lyric-line">"AND ALL I WANT TO SAY IS"</div>
+                    <div class="lyric-line">🎶 ❤️ 🎶</div>
+                </div>
+
+                <div class="gif-container">
+                    <img src="https://media1.tenor.com/m/BxibqUT9-I0AAAAC/dudu-flower.gif" alt="Giving flowers">
+                </div>
+                <h1>Will you be my Valentine?</h1>
+                <p>You make my world colorful! 🌹</p>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="handleYes()">Yes! 🥰</button>
+                    <button class="btn btn-secondary" onclick="handleNo()">No 😢</button>
+                </div>
+            </div>
+
+            <div id="screen-sad" class="screen">
+                <div class="gif-container">
+                    <img src="https://media.tenor.com/qqRoBpnjOrIAAAAi/tkthao219-bubududu.gif" alt="Crying bear">
+                </div>
+                <h1>But why?</h1>
+                <p>My heart is breaking... give me one more chance?</p>
+                <button class="btn btn-primary" onclick="retry()">Okay, let me try again</button>
+            </div>
+
+            <div id="screen-success" class="screen">
+                <div class="gif-container">
+                    <img src="https://media.tenor.com/gUiu1zyxfzYAAAAi/bear-kiss-bear-kisses.gif" alt="Kissing bears">
+                </div>
+                <h1>YAY! ❤️</h1>
+                <p>I love you so much!</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let isFlapOpen = false;
+
+        // STEP 1: Opens the envelope flap and slides letter up
+        function openFlap() {
+            if (isFlapOpen) return; // Stop if already open
+
+            const envelope = document.getElementById('envelope');
+            const audio = document.getElementById('bg-music');
+
+            if(audio) {
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log("Audio waiting for interaction"));
+            }
+            
+            envelope.classList.add('flap-open');
+            isFlapOpen = true;
+        }
+
+        // STEP 2: Triggered when user clicks the PAPER itself
+        function showFullCard(event) {
+            // Prevent this click from triggering openFlap again
+            event.stopPropagation(); 
+
+            if (!isFlapOpen) return; // Can't click paper if flap is closed
+
+            const envelope = document.getElementById('envelope');
+            const mainCard = document.getElementById('main-card');
+
+            // Hide envelope immediately
+            envelope.classList.add('hidden');
+            // Show main card
+            mainCard.classList.add('visible');
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function handleNo() {
+            switchScreen('screen-sad');
+            document.body.style.background = "linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%)";
+        }
+
+        function retry() {
+            switchScreen('screen-ask');
+            document.body.style.background = "linear-gradient(120deg, #fccb90 0%, #d57eeb 100%)";
+        }
+
+        function handleYes() {
+            switchScreen('screen-success');
+            document.body.classList.add('pulsating');
+
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff4757', '#ffffff'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff4757', '#ffffff'] });
+
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>
